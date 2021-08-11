@@ -1,9 +1,11 @@
+const { normalize } = require('path')
 const t = require('tap')
 
 const fs = require('../')
 
 t.test('creates a temp directory and passes it to provided function', async (t) => {
-  const root = t.testdir()
+  // normalize is necessary until https://github.com/tapjs/libtap/pull/40 is shipped
+  const root = normalize(t.testdir())
   const rootStat = await fs.lstat(root)
   let tempDir
   await fs.withTempDir(root, async (dir) => {
@@ -19,7 +21,8 @@ t.test('creates a temp directory and passes it to provided function', async (t) 
 })
 
 t.test('result from provided function bubbles out', async (t) => {
-  const root = t.testdir()
+  // normalize is necessary until https://github.com/tapjs/libtap/pull/40 is shipped
+  const root = normalize(t.testdir())
   const rootStat = await fs.lstat(root)
   let tempDir
   const result = await fs.withTempDir(root, async (dir) => {
@@ -37,7 +40,8 @@ t.test('result from provided function bubbles out', async (t) => {
 })
 
 t.test('cleans up when provided function rejects', async (t) => {
-  const root = t.testdir()
+  // normalize is necessary until https://github.com/tapjs/libtap/pull/40 is shipped
+  const root = normalize(t.testdir())
   const rootStat = await fs.lstat(root)
   let tempDir
   await t.rejects(fs.withTempDir(root, async (dir) => {
