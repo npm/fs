@@ -18,6 +18,7 @@ class ErrorCode extends Error {
 const EISDIR = new ErrorCode('EISDIR')
 const EMFILE = new ErrorCode('EMFILE')
 const ENOENT = new ErrorCode('ENOENT')
+const ENOTDIR = new ErrorCode('ENOTDIR')
 const EPERM = new ErrorCode('EPERM')
 const EUNKNOWN = new ErrorCode('EUNKNOWN') // fake error code for else coverage
 
@@ -84,6 +85,23 @@ t.test('can delete a directory', async (t) => {
   await rm(target, { recursive: true })
 
   t.equal(await fs.exists(target), false, 'target no longer exists')
+})
+
+t.test('resolves when rmdir gets ENOENT with force', async (t) => {
+  const dir = t.testdir()
+  // doesn't actually exist
+  const target = join(dir, 'directory')
+
+  const lstat = realFs.lstat
+  realFs.lstat = (path, cb) => {
+    realFs.lstat = lstat
+    setImmediate(cb, null, { isDirectory: () => true })
+  }
+  t.teardown(() => {
+    realFs.lstat = lstat
+  })
+
+  await t.resolves(rm(target, { recursive: true, force: true }))
 })
 
 t.test('rejects with EISDIR when deleting a directory without recursive', async (t) => {
@@ -195,6 +213,43 @@ t.test('rejects with unknown error removing top directory', async (t) => {
 
   await t.rejects(rm(dir, { recursive: true }), {
     code: 'EUNKNOWN',
+  })
+})
+
+t.test('posix', async (t) => {
+  let posixRm
+  t.before(() => {
+    t.context.platform = Object.getOwnPropertyDescriptor(process, 'platform')
+    Object.defineProperty(process, 'platform', {
+      ...t.context.platform,
+      value: 'linux',
+    })
+    posixRm = t.mock('../../lib/rm/polyfill.js')
+  })
+
+  t.teardown(() => {
+    Object.defineProperty(process, 'platform', t.context.platform)
+  })
+
+  t.test('EPERM in unlink calls rmdir', async (t) => {
+    const dir = t.testdir({
+      file: 'a file',
+    })
+    const target = join(dir, 'file')
+
+    const rmdir = realFs.rmdir
+    const unlink = realFs.unlink
+    // need to mock rmdir too so we can force an ENOTDIR
+    realFs.rmdir = (path, cb) => setImmediate(cb, ENOTDIR)
+    realFs.unlink = (path, cb) => setImmediate(cb, EPERM)
+    t.teardown(() => {
+      realFs.rmdir = rmdir
+      realFs.unlink = unlink
+    })
+
+    await t.rejects(posixRm(target, { recursive: true }), {
+      code: 'EPERM',
+    }, 'got the EPERM')
   })
 })
 
@@ -453,5 +508,85 @@ t.test('windows', async (t) => {
     t.ok(targetStatted, 'lstat() called with child path')
     t.not(await fs.exists(join(target, 'file')), 'file no longer exists')
     t.not(await fs.exists(target), 'target no longer exists')
+  })
+
+  t.test('ENOENT in rmdir resolves when file is really gone with force', async (t) => {
+    const dir = t.testdir({
+      directory: {},
+    })
+    const target = join(dir, 'directory')
+
+    let rmdirCalled = false
+    const lstat = realFs.lstat
+    const rmdir = realFs.rmdir
+    realFs.rmdir = (path, cb) => {
+      rmdirCalled = true
+      realFs.lstat = (path, cb) => setImmediate(cb, ENOENT)
+      setImmediate(cb, ENOENT)
+    }
+    t.teardown(() => {
+      realFs.lstat = lstat
+      realFs.rmdir = rmdir
+    })
+
+    await winRm(target, { recursive: true, force: true })
+    t.ok(rmdirCalled, 'rmdir() was called')
+  })
+
+  t.test('ENOENT in rmdir rejects with ENOENT when file is really gone without force', async (t) => {
+    const dir = t.testdir({
+      directory: {},
+    })
+    const target = join(dir, 'directory')
+
+    const lstat = realFs.lstat
+    const rmdir = realFs.rmdir
+    realFs.rmdir = (path, cb) => {
+      // need to hijack this here so only the lstat after rmdir gets the ENOENT
+      realFs.lstat = (path, cb) => setImmediate(cb, ENOENT)
+      setImmediate(cb, ENOENT)
+    }
+    t.teardown(() => {
+      realFs.lstat = lstat
+      realFs.rmdir = rmdir
+    })
+
+    await t.rejects(winRm(target, { recursive: true }), {
+      code: 'ENOENT',
+    }, 'got the ENOENT')
+  })
+
+  t.test('ENOENT in rmdir rejects with ENOTDIR when target still exists', async (t) => {
+    const dir = t.testdir({
+      directory: {},
+    })
+    const target = join(dir, 'directory')
+
+    const rmdir = realFs.rmdir
+    realFs.rmdir = (path, cb) => setImmediate(cb, ENOENT)
+    t.teardown(() => {
+      realFs.rmdir = rmdir
+    })
+
+    await t.rejects(winRm(target, { recursive: true }), {
+      code: 'ENOTDIR',
+    }, 'got the ENOTDIR')
+  })
+
+  t.test('ENOENT in rmdir rejects with ENOTDIR when target still exists and force is set', async (t) => {
+    const dir = t.testdir({
+      directory: {},
+    })
+    const target = join(dir, 'directory')
+
+    const rmdir = realFs.rmdir
+    realFs.rmdir = (path, cb) => setImmediate(cb, ENOENT)
+    t.teardown(() => {
+      realFs.rmdir = rmdir
+    })
+
+    await t.rejects(winRm(target, { recursive: true, force: true }), {
+      code: 'ENOTDIR',
+    }, 'got the ENOTDIR')
   })
 })
