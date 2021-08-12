@@ -31,9 +31,6 @@
   },
   "dependencies": {
     "@gar/promisify": "^1.0.1",
-    "infer-owner": "^1.0.4",
-    "mkdirp": "^1.0.4",
-    "rimraf": "^3.0.2",
     "semver": "^7.3.5"
   }
 }
