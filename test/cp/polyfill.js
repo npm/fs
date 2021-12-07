@@ -111,6 +111,23 @@ t.test('It copies file itself, rather than symlink, when dereference is true.', 
   t.ok(stat.isFile());
 })
 
+t.test('It copies relative symlinks', async t => {
+  const src = nextdir();
+  mkdirSync(src, { recursive: true });
+  writeFileSync(join(src, 'foo.js'), 'foo', 'utf8');
+  symlinkSync('./foo.js', join(src, 'bar.js'));
+
+  const dest = nextdir();
+  const destFile = join(dest, 'bar.js');
+  mkdirSync(dest, { recursive: true });
+  writeFileSync(join(dest, 'foo.js'), 'foo', 'utf8');
+  symlinkSync('./foo.js', destFile);
+
+  await cp(src, dest, {recursive: true})
+  const stat = lstatSync(destFile);
+  t.ok(stat.isSymbolicLink());
+})
+
 t.test('It returns error when src and dest are identical.', async t => {
   t.rejects(
     cp(kitchenSink, kitchenSink),
@@ -327,8 +344,17 @@ t.test('It accepts file URL as src and dest.', async t => {
 
 t.test('It throws if options is not object.', async t => {
   t.rejects(
-    () => cp('a', 'b', 'hello', () => {}),
+    () => cp('a', 'b', 'hello'),
     { code: 'ERR_INVALID_ARG_TYPE' });
+})
+
+t.test('It throws ENAMETOOLONG when name is too long', async t => {
+  const src = nextdir();
+  mkdirSync(src, { recursive: true });
+  const dest = join(tmpdir, 'a'.repeat(10_000));
+  t.rejects(
+    cp(src, dest),
+    { code: 'ENAMETOOLONG' });
 })
 
 function assertDirEquivalent(t, dir1, dir2) {
