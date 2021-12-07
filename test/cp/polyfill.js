@@ -1,12 +1,5 @@
-// copied from node test/parallel/test-fs-cp.mjs
-
-import { mustCall } from '../common/index.mjs';
-
-import assert from 'assert';
-import fs from 'fs';
+const fs = require('fs');
 const {
-  cp,
-  cpSync,
   lstatSync,
   mkdirSync,
   readdirSync,
@@ -16,72 +9,94 @@ const {
   statSync,
   writeFileSync,
 } = fs;
-import net from 'net';
-import { join } from 'path';
-import { pathToFileURL } from 'url';
-import { setTimeout } from 'timers/promises';
+
+const net = require('net');
+const { join } = require('path');
+const { pathToFileURL } = require('url');
+const t = require('tap');
+
+const cp = require('../../lib/cp/polyfill')
 
 const isWindows = process.platform === 'win32';
-import tmpdir from '../common/tmpdir.js';
-tmpdir.refresh();
+const tmpdir = t.testdir({
+  'kitchen-sink': {
+    a: {
+      b: {
+        'index.js': 'module.exports = { purpose: "testing copy" };',
+        'README2.md': '# Hello',
+      },
+      c: {
+        d: {
+          'index.js': 'module.exports = { purpose: "testing copy" };',
+          'README3.md': '# Hello',
+        },
+      },
+      'index.js': 'module.exports = { purpose: "testing copy" };',
+      'README2.md': '# Hello',
+    },
+    'index.js': 'module.exports = { purpose: "testing copy" };',
+    'README.md': '# Hello',
+  },
+})
+const kitchenSink = join(tmpdir, 'kitchen-sink')
 
 let dirc = 0;
 function nextdir() {
-  return join(tmpdir.path, `copy_${++dirc}`);
+  return join(tmpdir, `copy_${++dirc}`);
 }
 
-// Synchronous implementation of copy.
-
-// It copies a nested folder structure with files and folders.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
+t.test('It copies a nested folder structure with files and folders.', async t => {
+  const src = kitchenSink;
   const dest = nextdir();
-  cpSync(src, dest, { recursive: true });
-  assertDirEquivalent(src, dest);
-}
+  await cp(src, dest, { recursive: true })
+  assertDirEquivalent(t, src, dest);
+})
 
-// It does not throw errors when directory is copied over and force is false.
-{
+t.test('It does not throw errors when directory is copied over and force is false.', async t => {
   const src = nextdir();
   mkdirSync(join(src, 'a', 'b'), { recursive: true });
   writeFileSync(join(src, 'README.md'), 'hello world', 'utf8');
   const dest = nextdir();
-  cpSync(src, dest, { recursive: true });
+  await cp(src, dest, { dereference: true, recursive: true });
   const initialStat = lstatSync(join(dest, 'README.md'));
-  cpSync(src, dest, { force: false, recursive: true });
-  // File should not have been copied over, so access times will be identical:
-  assertDirEquivalent(src, dest);
-  const finalStat = lstatSync(join(dest, 'README.md'));
-  assert.strictEqual(finalStat.ctime.getTime(), initialStat.ctime.getTime());
-}
+  await cp(src, dest, {
+    dereference: true,
+    force: false,
+    recursive: true,
+  })
 
-// It overwrites existing files if force is true.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
+  // File should not have been copied over, so access times will be identical:
+  const finalStat = lstatSync(join(dest, 'README.md'));
+  t.equal(finalStat.ctime.getTime(), initialStat.ctime.getTime());
+})
+
+t.test('It overwrites existing files if force is true.', async t => {
+  const src = kitchenSink;
   const dest = nextdir();
   mkdirSync(dest, { recursive: true });
   writeFileSync(join(dest, 'README.md'), '# Goodbye', 'utf8');
-  cpSync(src, dest, { recursive: true });
-  assertDirEquivalent(src, dest);
-  const content = readFileSync(join(dest, 'README.md'), 'utf8');
-  assert.strictEqual(content.trim(), '# Hello');
-}
 
-// It does not fail if the same directory is copied to dest twice,
-// when dereference is true, and force is false (fails silently).
-{
-  const src = './test/fixtures/copy/kitchen-sink';
+  await cp(src, dest, { recursive: true })
+  assertDirEquivalent(t, src, dest);
+  const content = readFileSync(join(dest, 'README.md'), 'utf8');
+  t.equal(content.trim(), '# Hello');
+})
+
+t.test('It does not fail if the same directory is copied to dest twice, when dereference is true, and force is false (fails silently).', async t => {
+  const src = kitchenSink;
   const dest = nextdir();
   const destFile = join(dest, 'a/b/README2.md');
-  cpSync(src, dest, { dereference: true, recursive: true });
-  cpSync(src, dest, { dereference: true, recursive: true });
+  await cp(src, dest, { dereference: true, recursive: true });
+
+  await cp(src, dest, {
+    dereference: true,
+    recursive: true
+  })
   const stat = lstatSync(destFile);
-  assert(stat.isFile());
-}
+  t.ok(stat.isFile());
+})
 
-
-// It copies file itself, rather than symlink, when dereference is true.
-{
+t.test('It copies file itself, rather than symlink, when dereference is true.', async t => {
   const src = nextdir();
   mkdirSync(src, { recursive: true });
   writeFileSync(join(src, 'foo.js'), 'foo', 'utf8');
@@ -91,39 +106,30 @@ function nextdir() {
   mkdirSync(dest, { recursive: true });
   const destFile = join(dest, 'foo.js');
 
-  cpSync(join(src, 'bar.js'), destFile, { dereference: true, recursive: true });
+  await cp(join(src, 'bar.js'), destFile, { dereference: true })
   const stat = lstatSync(destFile);
-  assert(stat.isFile());
-}
+  t.ok(stat.isFile());
+})
 
+t.test('It returns error when src and dest are identical.', async t => {
+  t.rejects(
+    cp(kitchenSink, kitchenSink),
+    { code: 'ERR_FS_CP_EINVAL' })
+})
 
-// It throws error when src and dest are identical.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
-  assert.throws(
-    () => cpSync(src, src),
-    { code: 'ERR_FS_CP_EINVAL' }
-  );
-}
-
-// It throws error if symlink in src points to location in dest.
-{
+t.test('It returns error if symlink in src points to location in dest.', async t => {
   const src = nextdir();
   mkdirSync(src, { recursive: true });
   const dest = nextdir();
   mkdirSync(dest);
   symlinkSync(dest, join(src, 'link'));
-  cpSync(src, dest, { recursive: true });
-  assert.throws(
-    () => cpSync(src, dest, { recursive: true }),
-    {
-      code: 'ERR_FS_CP_EINVAL'
-    }
-  );
-}
+  await cp(src, dest, { recursive: true });
+  t.rejects(
+    cp(src, dest, { recursive: true }),
+    { code: 'ERR_FS_CP_EINVAL' })
+})
 
-// It throws error if symlink in dest points to location in src.
-{
+t.test('It returns error if symlink in dest points to location in src.', async t => {
   const src = nextdir();
   mkdirSync(join(src, 'a', 'b'), { recursive: true });
   symlinkSync(join(src, 'a', 'b'), join(src, 'a', 'c'));
@@ -131,14 +137,12 @@ function nextdir() {
   const dest = nextdir();
   mkdirSync(join(dest, 'a'), { recursive: true });
   symlinkSync(src, join(dest, 'a', 'c'));
-  assert.throws(
-    () => cpSync(src, dest, { recursive: true }),
-    { code: 'ERR_FS_CP_SYMLINK_TO_SUBDIRECTORY' }
-  );
-}
+  t.rejects(
+    cp(src, dest, { recursive: true }),
+    { code: 'ERR_FS_CP_SYMLINK_TO_SUBDIRECTORY' })
+})
 
-// It throws error if parent directory of symlink in dest points to src.
-{
+t.test('It returns error if parent directory of symlink in dest points to src.', async t => {
   const src = nextdir();
   mkdirSync(join(src, 'a'), { recursive: true });
   const dest = nextdir();
@@ -146,146 +150,134 @@ function nextdir() {
   const destLink = join(dest, 'b');
   mkdirSync(dest, { recursive: true });
   symlinkSync(src, destLink);
-  assert.throws(
-    () => cpSync(src, join(dest, 'b', 'c')),
-    { code: 'ERR_FS_CP_EINVAL' }
-  );
-}
+  t.rejects(
+    cp(src, join(dest, 'b', 'c')),
+    { code: 'ERR_FS_CP_EINVAL'});
+})
 
-// It throws error if attempt is made to copy directory to file.
-{
+t.test('It returns error if attempt is made to copy directory to file.', async t => {
   const src = nextdir();
   mkdirSync(src, { recursive: true });
-  const dest = './test/fixtures/copy/kitchen-sink/README.md';
-  assert.throws(
-    () => cpSync(src, dest),
-    { code: 'ERR_FS_CP_DIR_TO_NON_DIR' }
-  );
-}
+  const dest = join(kitchenSink, 'README.md');
+  t.rejects(
+    cp(src, dest),
+    { code: 'ERR_FS_CP_DIR_TO_NON_DIR'});
+})
 
-// It allows file to be copied to a file path.
-{
-  const srcFile = './test/fixtures/copy/kitchen-sink/index.js';
+t.test('It allows file to be copied to a file path.', async t => {
+  const srcFile = join(kitchenSink, 'README.md');
   const destFile = join(nextdir(), 'index.js');
-  cpSync(srcFile, destFile, { dereference: true });
+  await cp(srcFile, destFile, { dereference: true })
   const stat = lstatSync(destFile);
-  assert(stat.isFile());
-}
+  t.ok(stat.isFile());
+})
 
-// It throws error if directory copied without recursive flag.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
+t.test('It returns error if directory copied without recursive flag.', async t => {
+  const src = kitchenSink;
   const dest = nextdir();
-  assert.throws(
-    () => cpSync(src, dest),
-    { code: 'ERR_FS_EISDIR' }
-  );
-}
+  t.rejects(
+    cp(src, dest),
+    { code: 'ERR_FS_EISDIR'});
+})
 
-
-// It throws error if attempt is made to copy file to directory.
-{
-  const src = './test/fixtures/copy/kitchen-sink/README.md';
+t.test('It returns error if attempt is made to copy file to directory.', async t => {
+  const src = join(kitchenSink, 'README.md');
   const dest = nextdir();
   mkdirSync(dest, { recursive: true });
-  assert.throws(
-    () => cpSync(src, dest),
-    { code: 'ERR_FS_CP_NON_DIR_TO_DIR' }
-  );
-}
+  t.rejects(
+    cp(src, dest),
+    { code: 'ERR_FS_CP_NON_DIR_TO_DIR' });
+})
 
-// It throws error if attempt is made to copy to subdirectory of self.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
-  const dest = './test/fixtures/copy/kitchen-sink/a';
-  assert.throws(
-    () => cpSync(src, dest),
-    { code: 'ERR_FS_CP_EINVAL' }
-  );
-}
+t.test('It returns error if attempt is made to copy to subdirectory of self.', async t => {
+  const src = kitchenSink;
+  const dest = join(kitchenSink, 'a');
+  t.rejects(
+    cp(src, dest),
+    { code: 'ERR_FS_CP_EINVAL' });
+})
 
-// It throws an error if attempt is made to copy socket.
-if (!isWindows) {
+t.test('It returns an error if attempt is made to copy socket.', { skip: isWindows }, async t => {
   const dest = nextdir();
   const sock = `${process.pid}.sock`;
   const server = net.createServer();
   server.listen(sock);
-  assert.throws(
-    () => cpSync(sock, dest),
-    { code: 'ERR_FS_CP_SOCKET' }
-  );
-  server.close();
-}
+  t.teardown(() => server.close())
+  t.rejects(
+    cp(sock, dest),
+    { code: 'ERR_FS_CP_SOCKET' });
+})
 
-// It copies timestamps from src to dest if preserveTimestamps is true.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
+t.test('It copies timestamps from src to dest if preserveTimestamps is true.', async t => {
+  const src = kitchenSink;
   const dest = nextdir();
-  cpSync(src, dest, { preserveTimestamps: true, recursive: true });
-  assertDirEquivalent(src, dest);
+  await cp(src, dest, {
+    preserveTimestamps: true,
+    recursive: true
+  })
+  assertDirEquivalent(t, src, dest);
   const srcStat = lstatSync(join(src, 'index.js'));
   const destStat = lstatSync(join(dest, 'index.js'));
-  assert.strictEqual(srcStat.mtime.getTime(), destStat.mtime.getTime());
-}
+  t.equal(srcStat.mtime.getTime(), destStat.mtime.getTime());
+})
 
-// It applies filter function.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
+t.test('It applies filter function.', async t => {
+  const src = kitchenSink;
   const dest = nextdir();
-  cpSync(src, dest, {
+  await cp(src, dest, {
     filter: (path) => {
       const pathStat = statSync(path);
       return pathStat.isDirectory() || path.endsWith('.js');
     },
     dereference: true,
     recursive: true,
-  });
+  })
   const destEntries = [];
   collectEntries(dest, destEntries);
   for (const entry of destEntries) {
-    assert.strictEqual(
+    t.equal(
       entry.isDirectory() || entry.name.endsWith('.js'),
       true
     );
   }
-}
+})
 
-// It throws error if filter function is asynchronous.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
+t.test('It supports async filter function.', async t => {
+  const src = kitchenSink;
   const dest = nextdir();
-  assert.throws(() => {
-    cpSync(src, dest, {
-      filter: async (path) => {
-        await setTimeout(5, 'done');
-        const pathStat = statSync(path);
-        return pathStat.isDirectory() || path.endsWith('.js');
-      },
-      dereference: true,
-      recursive: true,
-    });
-  }, { code: 'ERR_INVALID_RETURN_VALUE' });
-}
+  await cp(src, dest, {
+    filter: async (path) => {
+      const pathStat = statSync(path)
+      return pathStat.isDirectory() || path.endsWith('.js')
+    },
+    dereference: true,
+    recursive: true,
+  })
+  const destEntries = [];
+  collectEntries(dest, destEntries);
+  for (const entry of destEntries) {
+    t.equal(
+      entry.isDirectory() || entry.name.endsWith('.js'),
+      true
+    );
+  }
+})
 
-// It throws error if errorOnExist is true, force is false, and file or folder
-// copied over.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
+t.test('It returns error if errorOnExist is true, force is false, and file or folder copied over.', async t => {
+  const src = kitchenSink;
   const dest = nextdir();
-  cpSync(src, dest, { recursive: true });
-  assert.throws(
-    () => cpSync(src, dest, {
+  await cp(src, dest, { recursive: true });
+  t.rejects(
+    cp(src, dest, {
       dereference: true,
       errorOnExist: true,
       force: false,
       recursive: true,
     }),
-    { code: 'ERR_FS_CP_EEXIST' }
-  );
-}
+    { code: 'ERR_FS_CP_EEXIST' });
+})
 
-// It throws EEXIST error if attempt is made to copy symlink over file.
-{
+t.test('It returns EEXIST error if attempt is made to copy symlink over file.', async t => {
   const src = nextdir();
   mkdirSync(join(src, 'a', 'b'), { recursive: true });
   symlinkSync(join(src, 'a', 'b'), join(src, 'a', 'c'));
@@ -293,463 +285,69 @@ if (!isWindows) {
   const dest = nextdir();
   mkdirSync(join(dest, 'a'), { recursive: true });
   writeFileSync(join(dest, 'a', 'c'), 'hello', 'utf8');
-  assert.throws(
-    () => cpSync(src, dest, { recursive: true }),
-    { code: 'EEXIST' }
-  );
-}
+  t.rejects(
+    cp(src, dest, { recursive: true }),
+    { code:  'EEXIST' });
+})
 
-// It makes file writeable when updating timestamp, if not writeable.
-{
+t.test('It makes file writeable when updating timestamp, if not writeable.', async t => {
   const src = nextdir();
   mkdirSync(src, { recursive: true });
   const dest = nextdir();
   mkdirSync(dest, { recursive: true });
   writeFileSync(join(src, 'foo.txt'), 'foo', { mode: 0o444 });
-  cpSync(src, dest, { preserveTimestamps: true, recursive: true });
-  assertDirEquivalent(src, dest);
+  await cp(src, dest, {
+    preserveTimestamps: true,
+    recursive: true,
+  })
+  assertDirEquivalent(t, src, dest);
   const srcStat = lstatSync(join(src, 'foo.txt'));
   const destStat = lstatSync(join(dest, 'foo.txt'));
-  assert.strictEqual(srcStat.mtime.getTime(), destStat.mtime.getTime());
-}
+  t.equal(srcStat.mtime.getTime(), destStat.mtime.getTime());
+})
 
-// It copies link if it does not point to folder in src.
-{
+t.test('It copies link if it does not point to folder in src.', async t => {
   const src = nextdir();
   mkdirSync(join(src, 'a', 'b'), { recursive: true });
   symlinkSync(src, join(src, 'a', 'c'));
   const dest = nextdir();
   mkdirSync(join(dest, 'a'), { recursive: true });
   symlinkSync(dest, join(dest, 'a', 'c'));
-  cpSync(src, dest, { recursive: true });
+  await cp(src, dest, { recursive: true })
   const link = readlinkSync(join(dest, 'a', 'c'));
-  assert.strictEqual(link, src);
-}
+  t.equal(link, src);
+})
 
-// It accepts file URL as src and dest.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
+t.test('It accepts file URL as src and dest.', async t => {
+  const src = kitchenSink;
   const dest = nextdir();
-  cpSync(pathToFileURL(src), pathToFileURL(dest), { recursive: true });
-  assertDirEquivalent(src, dest);
-}
+  await cp(pathToFileURL(src), pathToFileURL(dest), { recursive: true })
+  assertDirEquivalent(t, src, dest);
+})
 
-// It throws if options is not object.
-{
-  assert.throws(
-    () => cpSync('a', 'b', () => {}),
-    { code: 'ERR_INVALID_ARG_TYPE' }
-  );
-}
-
-// Callback implementation of copy.
-
-// It copies a nested folder structure with files and folders.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
-  const dest = nextdir();
-  cp(src, dest, { recursive: true }, mustCall((err) => {
-    assert.strictEqual(err, null);
-    assertDirEquivalent(src, dest);
-  }));
-}
-
-// It does not throw errors when directory is copied over and force is false.
-{
-  const src = nextdir();
-  mkdirSync(join(src, 'a', 'b'), { recursive: true });
-  writeFileSync(join(src, 'README.md'), 'hello world', 'utf8');
-  const dest = nextdir();
-  cpSync(src, dest, { dereference: true, recursive: true });
-  const initialStat = lstatSync(join(dest, 'README.md'));
-  cp(src, dest, {
-    dereference: true,
-    force: false,
-    recursive: true,
-  }, mustCall((err) => {
-    assert.strictEqual(err, null);
-    assertDirEquivalent(src, dest);
-    // File should not have been copied over, so access times will be identical:
-    const finalStat = lstatSync(join(dest, 'README.md'));
-    assert.strictEqual(finalStat.ctime.getTime(), initialStat.ctime.getTime());
-  }));
-}
-
-// It overwrites existing files if force is true.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
-  const dest = nextdir();
-  mkdirSync(dest, { recursive: true });
-  writeFileSync(join(dest, 'README.md'), '# Goodbye', 'utf8');
-
-  cp(src, dest, { recursive: true }, mustCall((err) => {
-    assert.strictEqual(err, null);
-    assertDirEquivalent(src, dest);
-    const content = readFileSync(join(dest, 'README.md'), 'utf8');
-    assert.strictEqual(content.trim(), '# Hello');
-  }));
-}
-
-// It does not fail if the same directory is copied to dest twice,
-// when dereference is true, and force is false (fails silently).
-{
-  const src = './test/fixtures/copy/kitchen-sink';
-  const dest = nextdir();
-  const destFile = join(dest, 'a/b/README2.md');
-  cpSync(src, dest, { dereference: true, recursive: true });
-  cp(src, dest, {
-    dereference: true,
-    recursive: true
-  }, mustCall((err) => {
-    assert.strictEqual(err, null);
-    const stat = lstatSync(destFile);
-    assert(stat.isFile());
-  }));
-}
-
-// It copies file itself, rather than symlink, when dereference is true.
-{
-  const src = nextdir();
-  mkdirSync(src, { recursive: true });
-  writeFileSync(join(src, 'foo.js'), 'foo', 'utf8');
-  symlinkSync(join(src, 'foo.js'), join(src, 'bar.js'));
-
-  const dest = nextdir();
-  mkdirSync(dest, { recursive: true });
-  const destFile = join(dest, 'foo.js');
-
-  cp(join(src, 'bar.js'), destFile, { dereference: true },
-     mustCall((err) => {
-       assert.strictEqual(err, null);
-       const stat = lstatSync(destFile);
-       assert(stat.isFile());
-     })
-  );
-}
-
-// It returns error when src and dest are identical.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
-  cp(src, src, mustCall((err) => {
-    assert.strictEqual(err.code, 'ERR_FS_CP_EINVAL');
-  }));
-}
-
-// It returns error if symlink in src points to location in dest.
-{
-  const src = nextdir();
-  mkdirSync(src, { recursive: true });
-  const dest = nextdir();
-  mkdirSync(dest);
-  symlinkSync(dest, join(src, 'link'));
-  cpSync(src, dest, { recursive: true });
-  cp(src, dest, { recursive: true }, mustCall((err) => {
-    assert.strictEqual(err.code, 'ERR_FS_CP_EINVAL');
-  }));
-}
-
-// It returns error if symlink in dest points to location in src.
-{
-  const src = nextdir();
-  mkdirSync(join(src, 'a', 'b'), { recursive: true });
-  symlinkSync(join(src, 'a', 'b'), join(src, 'a', 'c'));
-
-  const dest = nextdir();
-  mkdirSync(join(dest, 'a'), { recursive: true });
-  symlinkSync(src, join(dest, 'a', 'c'));
-  cp(src, dest, { recursive: true }, mustCall((err) => {
-    assert.strictEqual(err.code, 'ERR_FS_CP_SYMLINK_TO_SUBDIRECTORY');
-  }));
-}
-
-// It returns error if parent directory of symlink in dest points to src.
-{
-  const src = nextdir();
-  mkdirSync(join(src, 'a'), { recursive: true });
-  const dest = nextdir();
-  // Create symlink in dest pointing to src.
-  const destLink = join(dest, 'b');
-  mkdirSync(dest, { recursive: true });
-  symlinkSync(src, destLink);
-  cp(src, join(dest, 'b', 'c'), mustCall((err) => {
-    assert.strictEqual(err.code, 'ERR_FS_CP_EINVAL');
-  }));
-}
-
-// It returns error if attempt is made to copy directory to file.
-{
-  const src = nextdir();
-  mkdirSync(src, { recursive: true });
-  const dest = './test/fixtures/copy/kitchen-sink/README.md';
-  cp(src, dest, mustCall((err) => {
-    assert.strictEqual(err.code, 'ERR_FS_CP_DIR_TO_NON_DIR');
-  }));
-}
-
-// It allows file to be copied to a file path.
-{
-  const srcFile = './test/fixtures/copy/kitchen-sink/README.md';
-  const destFile = join(nextdir(), 'index.js');
-  cp(srcFile, destFile, { dereference: true }, mustCall((err) => {
-    assert.strictEqual(err, null);
-    const stat = lstatSync(destFile);
-    assert(stat.isFile());
-  }));
-}
-
-// It returns error if directory copied without recursive flag.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
-  const dest = nextdir();
-  cp(src, dest, mustCall((err) => {
-    assert.strictEqual(err.code, 'ERR_FS_EISDIR');
-  }));
-}
-
-// It returns error if attempt is made to copy file to directory.
-{
-  const src = './test/fixtures/copy/kitchen-sink/README.md';
-  const dest = nextdir();
-  mkdirSync(dest, { recursive: true });
-  cp(src, dest, mustCall((err) => {
-    assert.strictEqual(err.code, 'ERR_FS_CP_NON_DIR_TO_DIR');
-  }));
-}
-
-// It returns error if attempt is made to copy to subdirectory of self.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
-  const dest = './test/fixtures/copy/kitchen-sink/a';
-  cp(src, dest, mustCall((err) => {
-    assert.strictEqual(err.code, 'ERR_FS_CP_EINVAL');
-  }));
-}
-
-// It returns an error if attempt is made to copy socket.
-if (!isWindows) {
-  const dest = nextdir();
-  const sock = `${process.pid}.sock`;
-  const server = net.createServer();
-  server.listen(sock);
-  cp(sock, dest, mustCall((err) => {
-    assert.strictEqual(err.code, 'ERR_FS_CP_SOCKET');
-    server.close();
-  }));
-}
-
-// It copies timestamps from src to dest if preserveTimestamps is true.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
-  const dest = nextdir();
-  cp(src, dest, {
-    preserveTimestamps: true,
-    recursive: true
-  }, mustCall((err) => {
-    assert.strictEqual(err, null);
-    assertDirEquivalent(src, dest);
-    const srcStat = lstatSync(join(src, 'index.js'));
-    const destStat = lstatSync(join(dest, 'index.js'));
-    assert.strictEqual(srcStat.mtime.getTime(), destStat.mtime.getTime());
-  }));
-}
-
-// It applies filter function.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
-  const dest = nextdir();
-  cp(src, dest, {
-    filter: (path) => {
-      const pathStat = statSync(path);
-      return pathStat.isDirectory() || path.endsWith('.js');
-    },
-    dereference: true,
-    recursive: true,
-  }, mustCall((err) => {
-    assert.strictEqual(err, null);
-    const destEntries = [];
-    collectEntries(dest, destEntries);
-    for (const entry of destEntries) {
-      assert.strictEqual(
-        entry.isDirectory() || entry.name.endsWith('.js'),
-        true
-      );
-    }
-  }));
-}
-
-// It supports async filter function.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
-  const dest = nextdir();
-  cp(src, dest, {
-    filter: async (path) => {
-      await setTimeout(5, 'done');
-      const pathStat = statSync(path);
-      return pathStat.isDirectory() || path.endsWith('.js');
-    },
-    dereference: true,
-    recursive: true,
-  }, mustCall((err) => {
-    assert.strictEqual(err, null);
-    const destEntries = [];
-    collectEntries(dest, destEntries);
-    for (const entry of destEntries) {
-      assert.strictEqual(
-        entry.isDirectory() || entry.name.endsWith('.js'),
-        true
-      );
-    }
-  }));
-}
-
-// It returns error if errorOnExist is true, force is false, and file or folder
-// copied over.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
-  const dest = nextdir();
-  cpSync(src, dest, { recursive: true });
-  cp(src, dest, {
-    dereference: true,
-    errorOnExist: true,
-    force: false,
-    recursive: true,
-  }, mustCall((err) => {
-    assert.strictEqual(err.code, 'ERR_FS_CP_EEXIST');
-  }));
-}
-
-// It returns EEXIST error if attempt is made to copy symlink over file.
-{
-  const src = nextdir();
-  mkdirSync(join(src, 'a', 'b'), { recursive: true });
-  symlinkSync(join(src, 'a', 'b'), join(src, 'a', 'c'));
-
-  const dest = nextdir();
-  mkdirSync(join(dest, 'a'), { recursive: true });
-  writeFileSync(join(dest, 'a', 'c'), 'hello', 'utf8');
-  cp(src, dest, { recursive: true }, mustCall((err) => {
-    assert.strictEqual(err.code, 'EEXIST');
-  }));
-}
-
-// It makes file writeable when updating timestamp, if not writeable.
-{
-  const src = nextdir();
-  mkdirSync(src, { recursive: true });
-  const dest = nextdir();
-  mkdirSync(dest, { recursive: true });
-  writeFileSync(join(src, 'foo.txt'), 'foo', { mode: 0o444 });
-  cp(src, dest, {
-    preserveTimestamps: true,
-    recursive: true,
-  }, mustCall((err) => {
-    assert.strictEqual(err, null);
-    assertDirEquivalent(src, dest);
-    const srcStat = lstatSync(join(src, 'foo.txt'));
-    const destStat = lstatSync(join(dest, 'foo.txt'));
-    assert.strictEqual(srcStat.mtime.getTime(), destStat.mtime.getTime());
-  }));
-}
-
-// It copies link if it does not point to folder in src.
-{
-  const src = nextdir();
-  mkdirSync(join(src, 'a', 'b'), { recursive: true });
-  symlinkSync(src, join(src, 'a', 'c'));
-  const dest = nextdir();
-  mkdirSync(join(dest, 'a'), { recursive: true });
-  symlinkSync(dest, join(dest, 'a', 'c'));
-  cp(src, dest, { recursive: true }, mustCall((err) => {
-    assert.strictEqual(err, null);
-    const link = readlinkSync(join(dest, 'a', 'c'));
-    assert.strictEqual(link, src);
-  }));
-}
-
-// It accepts file URL as src and dest.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
-  const dest = nextdir();
-  cp(pathToFileURL(src), pathToFileURL(dest), { recursive: true },
-     mustCall((err) => {
-       assert.strictEqual(err, null);
-       assertDirEquivalent(src, dest);
-     }));
-}
-
-// It throws if options is not object.
-{
-  assert.throws(
+t.test('It throws if options is not object.', async t => {
+  t.rejects(
     () => cp('a', 'b', 'hello', () => {}),
-    { code: 'ERR_INVALID_ARG_TYPE' }
-  );
-}
+    { code: 'ERR_INVALID_ARG_TYPE' });
+})
 
-// Promises implementation of copy.
-
-// It copies a nested folder structure with files and folders.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
-  const dest = nextdir();
-  const p = await fs.promises.cp(src, dest, { recursive: true });
-  assert.strictEqual(p, undefined);
-  assertDirEquivalent(src, dest);
-}
-
-// It accepts file URL as src and dest.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
-  const dest = nextdir();
-  const p = await fs.promises.cp(
-    pathToFileURL(src),
-    pathToFileURL(dest),
-    { recursive: true }
-  );
-  assert.strictEqual(p, undefined);
-  assertDirEquivalent(src, dest);
-}
-
-// It allows async error to be caught.
-{
-  const src = './test/fixtures/copy/kitchen-sink';
-  const dest = nextdir();
-  await fs.promises.cp(src, dest, { recursive: true });
-  await assert.rejects(
-    fs.promises.cp(src, dest, {
-      dereference: true,
-      errorOnExist: true,
-      force: false,
-      recursive: true,
-    }),
-    { code: 'ERR_FS_CP_EEXIST' }
-  );
-}
-
-// It rejects if options is not object.
-{
-  await assert.rejects(
-    fs.promises.cp('a', 'b', () => {}),
-    { code: 'ERR_INVALID_ARG_TYPE' }
-  );
-}
-
-function assertDirEquivalent(dir1, dir2) {
+function assertDirEquivalent(t, dir1, dir2) {
   const dir1Entries = [];
   collectEntries(dir1, dir1Entries);
   const dir2Entries = [];
   collectEntries(dir2, dir2Entries);
-  assert.strictEqual(dir1Entries.length, dir2Entries.length);
+  t.equal(dir1Entries.length, dir2Entries.length);
   for (const entry1 of dir1Entries) {
     const entry2 = dir2Entries.find((entry) => {
       return entry.name === entry1.name;
     });
-    assert(entry2, `entry ${entry2.name} not copied`);
+    t.ok(entry2, `entry ${entry2.name} not copied`);
     if (entry1.isFile()) {
-      assert(entry2.isFile(), `${entry2.name} was not file`);
+      t.ok(entry2.isFile(), `${entry2.name} was not file`);
     } else if (entry1.isDirectory()) {
-      assert(entry2.isDirectory(), `${entry2.name} was not directory`);
+      t.ok(entry2.isDirectory(), `${entry2.name} was not directory`);
     } else if (entry1.isSymbolicLink()) {
-      assert(entry2.isSymbolicLink(), `${entry2.name} was not symlink`);
+      t.ok(entry2.isSymbolicLink(), `${entry2.name} was not symlink`);
     }
   }
 }
