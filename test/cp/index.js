@@ -26,4 +26,3 @@ t.test('can copy a directory', async (t) => {
 
   t.equal(await fs.exists(dest), true, 'dest exists')
 })
-
