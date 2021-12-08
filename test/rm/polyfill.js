@@ -360,7 +360,7 @@ t.test('windows', async (t) => {
     t.ok(chmodCalled, 'chmod() was called')
   })
 
-  t.test('ENOENT in chmod after EPERM in lstat rejects with EPERM when force is unset', async (t) => {
+  t.test('chmod ENOENT after EPERM in lstat rejects with EPERM when force is unset', async (t) => {
     const dir = t.testdir({
       directory: {},
     })
@@ -421,7 +421,7 @@ t.test('windows', async (t) => {
     t.ok(calledChmod, 'chmod() was called')
   })
 
-  t.test('ENOENT in lstat after EPERM and chmod rejects with EPERM when force is unset', async (t) => {
+  t.test('lstat ENOENT after EPERM and chmod rejects with EPERM when force is unset', async (t) => {
     const dir = t.testdir({
       directory: {},
     })
@@ -533,7 +533,7 @@ t.test('windows', async (t) => {
     t.ok(rmdirCalled, 'rmdir() was called')
   })
 
-  t.test('ENOENT in rmdir rejects with ENOENT when file is really gone without force', async (t) => {
+  t.test('rmdir ENOENT rejects with ENOENT when file is really gone without force', async (t) => {
     const dir = t.testdir({
       directory: {},
     })
@@ -573,7 +573,7 @@ t.test('windows', async (t) => {
     }, 'got the ENOTDIR')
   })
 
-  t.test('ENOENT in rmdir rejects with ENOTDIR when target still exists and force is set', async (t) => {
+  t.test('rmdir ENOENT rejects with ENOTDIR if target still exists and force is set', async (t) => {
     const dir = t.testdir({
       directory: {},
     })
