@@ -348,15 +348,6 @@ t.test('It throws if options is not object.', async t => {
     { code: 'ERR_INVALID_ARG_TYPE' })
 })
 
-t.test('It throws ENAMETOOLONG when name is too long', async t => {
-  const src = nextdir()
-  mkdirSync(src, { recursive: true })
-  const dest = join(tmpdir, 'a'.repeat(10000))
-  t.rejects(
-    cp(src, dest),
-    { code: 'ENAMETOOLONG' })
-})
-
 function assertDirEquivalent (t, dir1, dir2) {
   const dir1Entries = []
   collectEntries(dir1, dir1Entries)
