@@ -34,8 +34,5 @@
     "@gar/promisify": "^1.0.1",
     "semver": "^7.3.5"
   },
-  "templateVersion": "2.3.1",
-  "engines": {
-    "node": "^12.13.0 || ^14.15.0 || >=16"
-  }
+  "templateVersion": "2.3.1"
 }
