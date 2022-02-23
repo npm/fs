@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.0.1](https://www.github.com/npm/fs/compare/v2.0.0...v2.0.1) (2022-02-23)
+
+
+### Bug Fixes
+
+* add repo entry to package.json ([#10](https://www.github.com/npm/fs/issues/10)) ([eb723e4](https://www.github.com/npm/fs/commit/eb723e44cbddd1d5c568fdfb1297a18672c41085))
+
 ## [2.0.0](https://www.github.com/npm/fs/compare/v1.1.1...v2.0.0) (2022-02-23)
 
 
