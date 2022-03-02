@@ -32,7 +32,7 @@
   "author": "GitHub Inc.",
   "license": "ISC",
   "devDependencies": {
-    "@npmcli/template-oss": "^2.8.1",
+    "@npmcli/template-oss": "^2.9.2",
     "tap": "^15.1.6"
   },
   "dependencies": {
@@ -43,6 +43,6 @@
     "node": "^12.13.0 || ^14.15.0 || >=16"
   },
   "templateOSS": {
-    "version": "2.8.1"
+    "version": "2.9.2"
   }
 }
