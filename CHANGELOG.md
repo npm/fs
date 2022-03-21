@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/npm/fs/compare/v2.0.1...v2.1.0) (2022-03-21)
+
+
+### Features
+
+* add withOwner and withOwnerSync methods ([#21](https://github.com/npm/fs/issues/21)) ([40ee281](https://github.com/npm/fs/commit/40ee28171138070fc28914689a190bf0727af555))
+
 ### [2.0.1](https://www.github.com/npm/fs/compare/v2.0.0...v2.0.1) (2022-02-23)
 
 
