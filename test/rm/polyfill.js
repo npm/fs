@@ -406,10 +406,8 @@ t.test('windows', async (t) => {
       chmod(path, mode, cb)
     }
     // after the first call, we swap in an ENOENT
-    realFs.lstat = (path, cb) => {
-      realFs.lstat = (path, cb) => {
-        setImmediate(cb, ENOENT)
-      }
+    realFs.lstat = (_, cb) => {
+      realFs.lstat = (__, cb2) => setImmediate(cb2, ENOENT)
       setImmediate(cb, EPERM)
     }
     t.teardown(() => {
@@ -438,10 +436,8 @@ t.test('windows', async (t) => {
       chmod(path, mode, cb)
     }
     // after the first call, we swap in an ENOENT
-    realFs.lstat = (path, cb) => {
-      realFs.lstat = (path, cb) => {
-        setImmediate(cb, ENOENT)
-      }
+    realFs.lstat = (_, cb) => {
+      realFs.lstat = (__, cb2) => setImmediate(cb2, ENOENT)
       setImmediate(cb, EPERM)
     }
     t.teardown(() => {
@@ -519,9 +515,9 @@ t.test('windows', async (t) => {
     let rmdirCalled = false
     const lstat = realFs.lstat
     const rmdir = realFs.rmdir
-    realFs.rmdir = (path, cb) => {
+    realFs.rmdir = (_, cb) => {
       rmdirCalled = true
-      realFs.lstat = (path, cb) => setImmediate(cb, ENOENT)
+      realFs.lstat = (__, cb2) => setImmediate(cb2, ENOENT)
       setImmediate(cb, ENOENT)
     }
     t.teardown(() => {
@@ -541,9 +537,9 @@ t.test('windows', async (t) => {
 
     const lstat = realFs.lstat
     const rmdir = realFs.rmdir
-    realFs.rmdir = (path, cb) => {
+    realFs.rmdir = (_, cb) => {
       // need to hijack this here so only the lstat after rmdir gets the ENOENT
-      realFs.lstat = (path, cb) => setImmediate(cb, ENOENT)
+      realFs.lstat = (__, cb2) => setImmediate(cb2, ENOENT)
       setImmediate(cb, ENOENT)
     }
     t.teardown(() => {
@@ -563,7 +559,7 @@ t.test('windows', async (t) => {
     const target = join(dir, 'directory')
 
     const rmdir = realFs.rmdir
-    realFs.rmdir = (path, cb) => setImmediate(cb, ENOENT)
+    realFs.rmdir = (_, cb) => setImmediate(cb, ENOENT)
     t.teardown(() => {
       realFs.rmdir = rmdir
     })
@@ -580,7 +576,7 @@ t.test('windows', async (t) => {
     const target = join(dir, 'directory')
 
     const rmdir = realFs.rmdir
-    realFs.rmdir = (path, cb) => setImmediate(cb, ENOENT)
+    realFs.rmdir = (_, cb) => setImmediate(cb, ENOENT)
     t.teardown(() => {
       realFs.rmdir = rmdir
     })

@@ -72,7 +72,7 @@ t.test('update', async (t) => {
     // called since we won't have a real chown on all platforms
     const stat = realFs.stat
     const chown = realFs.chown
-    realFs.stat = (path, cb) => setImmediate(cb, null, { uid: 2, gid: 2 })
+    realFs.stat = (_, cb) => setImmediate(cb, null, { uid: 2, gid: 2 })
     realFs.chown = (path, uid, gid, cb) => {
       t.equal(path, join(dir, 'test.txt'), 'got the right path')
       t.equal(uid, 1, 'chown() got right uid')
@@ -110,8 +110,8 @@ t.test('update', async (t) => {
 
     const stat = realFs.stat
     const chown = realFs.chown
-    realFs.stat = (path, cb) => setImmediate(cb, null, { uid, gid })
-    realFs.chown = (path, uid, gid, cb) => t.fail('should not have called chown()')
+    realFs.stat = (_, cb) => setImmediate(cb, null, { uid, gid })
+    realFs.chown = () => t.fail('should not have called chown()')
     t.teardown(() => {
       realFs.stat = stat
       realFs.chown = chown
@@ -123,7 +123,7 @@ t.test('update', async (t) => {
   t.test('chowns if only uid differs from current values', async (t) => {
     const stat = realFs.stat
     const chown = realFs.chown
-    realFs.stat = (path, cb) => setImmediate(cb, null, { uid: 2, gid: 1 })
+    realFs.stat = (_, cb) => setImmediate(cb, null, { uid: 2, gid: 1 })
     realFs.chown = (path, uid, gid, cb) => {
       t.equal(path, join(dir, 'test.txt'), 'got the right path')
       t.equal(uid, 1, 'chown() got right uid')
@@ -146,7 +146,7 @@ t.test('update', async (t) => {
     const stat = realFs.stat
     const chown = realFs.chown
     // stat returns uid 1, gid 2
-    realFs.stat = (path, cb) => setImmediate(cb, null, { uid: 1, gid: 2 })
+    realFs.stat = (_, cb) => setImmediate(cb, null, { uid: 1, gid: 2 })
     realFs.chown = (path, uid, gid, cb) => {
       t.equal(path, join(dir, 'test.txt'), 'got the right path')
       t.equal(uid, 1, 'chown() got right uid')
