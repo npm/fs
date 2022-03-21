@@ -4,8 +4,8 @@
   "description": "filesystem utilities for the npm cli",
   "main": "lib/index.js",
   "files": [
-    "bin",
-    "lib"
+    "bin/",
+    "lib/"
   ],
   "scripts": {
     "preversion": "npm test",
@@ -14,12 +14,12 @@
     "snap": "tap",
     "test": "tap",
     "npmclilint": "npmcli-lint",
-    "lint": "eslint '**/*.js'",
+    "lint": "eslint \"**/*.js\"",
     "lintfix": "npm run lint -- --fix",
     "posttest": "npm run lint",
     "postsnap": "npm run lintfix --",
-    "postlint": "npm-template-check",
-    "template-copy": "npm-template-copy --force"
+    "postlint": "template-oss-check",
+    "template-oss-apply": "template-oss-apply --force"
   },
   "repository": {
     "type": "git",
@@ -32,7 +32,8 @@
   "author": "GitHub Inc.",
   "license": "ISC",
   "devDependencies": {
-    "@npmcli/template-oss": "^2.9.2",
+    "@npmcli/eslint-config": "^3.0.1",
+    "@npmcli/template-oss": "3.1.2",
     "tap": "^15.1.6"
   },
   "dependencies": {
@@ -40,9 +41,10 @@
     "semver": "^7.3.5"
   },
   "engines": {
-    "node": "^12.13.0 || ^14.15.0 || >=16"
+    "node": "^12.13.0 || ^14.15.0 || >=16.0.0"
   },
   "templateOSS": {
-    "version": "2.9.2"
+    "//@npmcli/template-oss": "This file is partially managed by @npmcli/template-oss. Edits may be overwritten.",
+    "version": "3.1.2"
   }
 }
