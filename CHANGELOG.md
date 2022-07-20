@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/npm/fs/compare/v2.1.0...v2.1.1) (2022-07-20)
+
+
+### Bug Fixes
+
+* remove polyfills which are out of range of our engines ([#35](https://github.com/npm/fs/issues/35)) ([be1e7b2](https://github.com/npm/fs/commit/be1e7b262de3e1cf6b2803173094c73676446fd7))
+
 ## [2.1.0](https://www.github.com/npm/fs/compare/v2.0.1...v2.1.0) (2022-03-21)
 
 
