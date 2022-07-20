@@ -1,7 +1,7 @@
 const { join } = require('path')
 const t = require('tap')
 
-const fs = require('../../')
+const fs = require('../lib')
 
 t.test('can create a directory', async (t) => {
   const root = t.testdir()
