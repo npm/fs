@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.2](https://github.com/npm/fs/compare/v2.1.1...v2.1.2) (2022-08-15)
+
+
+### Bug Fixes
+
+* linting ([#37](https://github.com/npm/fs/issues/37)) ([816bb74](https://github.com/npm/fs/commit/816bb74233cb029188e5236deea4dc58fbb70a94))
+
 ## [2.1.1](https://github.com/npm/fs/compare/v2.1.0...v2.1.1) (2022-07-20)
 
 
