@@ -5,28 +5,8 @@ polyfills, and extensions, of the core `fs` module.
 ## Features
 
 - all exposed functions return promises
-- `fs.rm` polyfill for node versions < 14.14.0
-- `fs.mkdir` polyfill adding support for the `recursive` and `force` options in node versions < 10.12.0
-- `fs.copyFile` extended to accept an `owner` option
-- `fs.mkdir` extended to accept an `owner` option
-- `fs.mkdtemp` extended to accept an `owner` option
-- `fs.writeFile` extended to accept an `owner` option
-- `fs.withTempDir` added
-- `fs.withOwner` added
-- `fs.withOwnerSync` added
 - `fs.cp` polyfill for node < 16.7.0
-
-## The `owner` option
-
-The `copyFile`, `mkdir`, `mkdtemp`, `writeFile`, and `withTempDir` functions
-all accept a new `owner` property in their options. It can be used in two ways:
-
-- `{ owner: { uid: 100, gid: 100 } }` - set the `uid` and `gid` explicitly
-- `{ owner: 100 }` - use one value, will set both `uid` and `gid` the same
-
-The special string `'inherit'` may be passed instead of a number, which will
-cause this module to automatically determine the correct `uid` and/or `gid`
-from the nearest existing parent directory of the target.
+- `fs.withTempDir` added
 
 ## `fs.withTempDir(root, fn, options) -> Promise`
 
