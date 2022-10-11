@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.0.0](https://github.com/npm/fs/compare/v2.1.2...v3.0.0) (2022-10-11)
+
+### ⚠️ BREAKING CHANGES
+
+* this package no longer exports the full set of core fs functions
+* this removes the `owner` option from all methods that previously supported it, as well as the `withOwner` and `withOwnerSync` methods
+* `@npmcli/fs` is now compatible with the following semver range for node: `^14.17.0 || ^16.13.0 || >=18.0.0`
+
+### Features
+
+* [`b788931`](https://github.com/npm/fs/commit/b78893107ae447c4ac65182aef24d9f39a46cd45) [#54](https://github.com/npm/fs/pull/54) remove custom promisification in favor of fs/promises (#54) (@nlf)
+* [`e666309`](https://github.com/npm/fs/commit/e66630906e0796fe0cd5fdda970f1be30243fb1c) [#53](https://github.com/npm/fs/pull/53) remove owner related code as well as stale polyfills (#53) (@nlf)
+* [`895d205`](https://github.com/npm/fs/commit/895d205502851ce1707b3ed0c1935e414c10be6b) [#46](https://github.com/npm/fs/pull/46) postinstall for dependabot template-oss PR (@lukekarrys)
+
 ## [2.1.2](https://github.com/npm/fs/compare/v2.1.1...v2.1.2) (2022-08-15)
 
 
