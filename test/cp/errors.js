@@ -1,5 +1,5 @@
 const t = require('tap')
-const { ERR_FS_EISDIR } = require('../lib/errors')
+const { ERR_FS_EISDIR } = require('../../lib/cp/errors')
 const { constants: { errno: { EISDIR, EIO } } } = require('os')
 const { inspect } = require('util')
 
