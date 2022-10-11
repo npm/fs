@@ -1,7 +1,8 @@
+const { stat } = require('fs/promises')
 const { join } = require('path')
 const t = require('tap')
 
-const fs = require('../../')
+const cp = require('../../lib/cp/index.js')
 
 t.test('can copy a file', async (t) => {
   const dir = t.testdir({
@@ -10,9 +11,10 @@ t.test('can copy a file', async (t) => {
   const src = join(dir, 'file')
   const dest = join(dir, 'dest')
 
-  await fs.cp(src, dest)
+  await cp(src, dest)
 
-  t.equal(await fs.exists(dest), true, 'dest exits')
+  const exists = await stat(dest).then(() => true).catch(() => false)
+  t.equal(exists, true, 'dest exits')
 })
 
 t.test('can copy a directory', async (t) => {
@@ -22,7 +24,8 @@ t.test('can copy a directory', async (t) => {
   const src = join(dir, 'directory')
   const dest = join(dir, 'dest')
 
-  await fs.cp(src, dest, { recursive: true })
+  await cp(src, dest, { recursive: true })
 
-  t.equal(await fs.exists(dest), true, 'dest exists')
+  const exists = await stat(dest).then(() => true).catch(() => false)
+  t.equal(exists, true, 'dest exists')
 })
