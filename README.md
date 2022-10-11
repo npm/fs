@@ -4,7 +4,6 @@ polyfills, and extensions, of the core `fs` module.
 
 ## Features
 
-- all exposed functions return promises
 - `fs.cp` polyfill for node < 16.7.0
 - `fs.withTempDir` added
 
