@@ -7,6 +7,7 @@ polyfills, and extensions, of the core `fs` module.
 - `fs.cp` polyfill for node < 16.7.0
 - `fs.withTempDir` added
 - `fs.readdirScoped` added
+- `fs.moveFile` added
 
 ## `fs.withTempDir(root, fn, options) -> Promise`
 
@@ -56,4 +57,41 @@ a single entry.
 const readdir = require('readdir-scoped-modules')
 const entries = await readdir('node_modules')
 // entries will be something like: ['a', '@org/foo', '@org/bar']
+```
+
+## `fs.moveFile(source, dest, options) -> Promise`
+
+A fork of [move-file](https://github.com/sindresorhus/move-file) with
+support for Common JS.
+
+### Highlights
+
+- Promise API.
+- Supports moving a file across partitions and devices.
+- Optionally prevent overwriting an existing file.
+- Creates non-existent destination directories for you.
+- Automatically recurses when source is a directory.
+
+### Parameters
+
+- `source`: File, or directory, you want to move.
+- `dest`: Where you want the file or directory moved.
+- `options`
+  - `overwrite` (`boolean`, default: `true`): Overwrite existing destination file(s).
+
+### Usage
+
+The built-in
+[`fs.rename()`](https://nodejs.org/api/fs.html#fs_fs_rename_oldpath_newpath_callback)
+is just a JavaScript wrapper for the C `rename(2)` function, which doesn't
+support moving files across partitions or devices. This module is what you
+would have expected `fs.rename()` to be.
+
+```js
+const { moveFile } = require('@npmcli/fs');
+
+(async () => {
+	await moveFile('source/unicorn.png', 'destination/unicorn.png');
+	console.log('The file has been moved');
+})();
 ```
