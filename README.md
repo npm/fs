@@ -6,6 +6,7 @@ polyfills, and extensions, of the core `fs` module.
 
 - `fs.cp` polyfill for node < 16.7.0
 - `fs.withTempDir` added
+- `fs.readdirScoped` added
 
 ## `fs.withTempDir(root, fn, options) -> Promise`
 
@@ -38,4 +39,21 @@ const main = async () => {
 }
 
 main()
+```
+
+## `fs.readdirScoped(root) -> Promise`
+
+### Parameters
+
+- `root`: the directory to read
+
+### Usage
+
+Like `fs.readdir` but handling `@org/module` dirs as if they were
+a single entry.
+
+```javascript
+const readdir = require('readdir-scoped-modules')
+const entries = await readdir('node_modules')
+// entries will be something like: ['a', '@org/foo', '@org/bar']
 ```
