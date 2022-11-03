@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.0](https://github.com/npm/fs/compare/v3.0.0...v3.1.0) (2022-11-03)
+
+### Features
+
+* [`ecbb150`](https://github.com/npm/fs/commit/ecbb1507e0f6af546c17719426807ec3716c5b54) [#63](https://github.com/npm/fs/pull/63) port @npmcli/move-file (#63) (@lukekarrys)
+* [`1268710`](https://github.com/npm/fs/commit/126871003bd0fcf615ac15621b11fec03e76ed2d) [#62](https://github.com/npm/fs/pull/62) add readdirScoped method (@lukekarrys)
+
 ## [3.0.0](https://github.com/npm/fs/compare/v2.1.2...v3.0.0) (2022-10-11)
 
 ### ⚠️ BREAKING CHANGES
