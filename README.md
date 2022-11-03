@@ -70,7 +70,6 @@ support for Common JS.
 - Supports moving a file across partitions and devices.
 - Optionally prevent overwriting an existing file.
 - Creates non-existent destination directories for you.
-- Support for Node versions that lack built-in recursive `fs.mkdir()`
 - Automatically recurses when source is a directory.
 
 ### Parameters
