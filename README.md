@@ -82,9 +82,11 @@ support for Common JS.
 
 ### Usage
 
-The `withTempDir` function creates a temporary directory, runs the provided
-function (`fn`), then removes the temporary directory and resolves or rejects
-based on the result of `fn`.
+The built-in
+[`fs.rename()`](https://nodejs.org/api/fs.html#fs_fs_rename_oldpath_newpath_callback)
+is just a JavaScript wrapper for the C `rename(2)` function, which doesn't
+support moving files across partitions or devices. This module is what you
+would have expected `fs.rename()` to be.
 
 ```js
 const { moveFile } = require('@npmcli/fs');
