@@ -7,6 +7,7 @@ polyfills, and extensions, of the core `fs` module.
 - `fs.cp` polyfill for node < 16.7.0
 - `fs.withTempDir` added
 - `fs.readdirScoped` added
+- `fs.moveFile` added
 
 ## `fs.withTempDir(root, fn, options) -> Promise`
 
@@ -56,4 +57,40 @@ a single entry.
 const readdir = require('readdir-scoped-modules')
 const entries = await readdir('node_modules')
 // entries will be something like: ['a', '@org/foo', '@org/bar']
+```
+
+## `fs.moveFile(source, dest, options) -> Promise`
+
+A fork of [move-file](https://github.com/sindresorhus/move-file) with
+support for Common JS.
+
+### Highlights
+
+- Promise API.
+- Supports moving a file across partitions and devices.
+- Optionally prevent overwriting an existing file.
+- Creates non-existent destination directories for you.
+- Support for Node versions that lack built-in recursive `fs.mkdir()`
+- Automatically recurses when source is a directory.
+
+### Parameters
+
+- `source`: File, or directory, you want to move.
+- `dest`: Where you want the file or directory moved.
+- `options`
+  - `overwrite` (`boolean`, default: `true`): Overwrite existing destination file(s).
+
+### Usage
+
+The `withTempDir` function creates a temporary directory, runs the provided
+function (`fn`), then removes the temporary directory and resolves or rejects
+based on the result of `fn`.
+
+```js
+const { moveFile } = require('@npmcli/fs');
+
+(async () => {
+	await moveFile('source/unicorn.png', 'destination/unicorn.png');
+	console.log('The file has been moved');
+})();
 ```
