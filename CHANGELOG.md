@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.1.1](https://github.com/npm/fs/compare/v3.1.0...v3.1.1) (2024-04-21)
+
+### Documentation
+
+* [`2cb7474`](https://github.com/npm/fs/commit/2cb74741359bc3712d08760aebe1c25cc0f42f3d) [#91](https://github.com/npm/fs/pull/91) fix the example for readdirScoped (#91) (@aminya)
+
+### Chores
+
+* [`9142244`](https://github.com/npm/fs/commit/914224478eb55d58fc2ed8972f15361289416f96) [#105](https://github.com/npm/fs/pull/105) postinstall for dependabot template-oss PR (@lukekarrys)
+* [`5b0f7c6`](https://github.com/npm/fs/commit/5b0f7c6de9052ddba37df5cc2a1cbfc5dda40efc) [#105](https://github.com/npm/fs/pull/105) bump @npmcli/template-oss from 4.21.3 to 4.21.4 (@dependabot[bot])
+
 ## [3.1.0](https://github.com/npm/fs/compare/v3.0.0...v3.1.0) (2022-11-03)
 
 ### Features
