@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.0.0](https://github.com/npm/fs/compare/v3.1.1...v4.0.0) (2024-09-11)
+### ⚠️ BREAKING CHANGES
+* `@npmcli/fs` now supports node `^18.17.0 || >=20.5.0`
+### Bug Fixes
+* [`618ca23`](https://github.com/npm/fs/commit/618ca236ab9a8e8fe515707efa6c51869badff22) [#121](https://github.com/npm/fs/pull/121) align to npm 10 node engine range (@hashtagchris)
+### Chores
+* [`1c67142`](https://github.com/npm/fs/commit/1c6714216afb9469f2add2e2f13cf0eaf241299d) [#123](https://github.com/npm/fs/pull/123) enable auto publish (@hashtagchris)
+* [`83f4580`](https://github.com/npm/fs/commit/83f45800994afddaa472ceac15ff8600a89ae7ca) [#121](https://github.com/npm/fs/pull/121) run template-oss-apply (@hashtagchris)
+* [`65bff4e`](https://github.com/npm/fs/commit/65bff4ea1d681d3a3009c9a554961a205c36114a) [#119](https://github.com/npm/fs/pull/119) bump @npmcli/eslint-config from 4.0.5 to 5.0.0 (@dependabot[bot])
+* [`6dd91fc`](https://github.com/npm/fs/commit/6dd91fc020f098d513cb96ab4379ab9b8d667d37) [#120](https://github.com/npm/fs/pull/120) postinstall for dependabot template-oss PR (@hashtagchris)
+* [`72176f8`](https://github.com/npm/fs/commit/72176f81fd7adf8da9fd31339ee7b2ee9ee352bf) [#120](https://github.com/npm/fs/pull/120) bump @npmcli/template-oss from 4.23.1 to 4.23.3 (@dependabot[bot])
+
 ## [3.1.1](https://github.com/npm/fs/compare/v3.1.0...v3.1.1) (2024-05-03)
 
 ### Documentation
