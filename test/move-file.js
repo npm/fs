@@ -6,6 +6,12 @@ const moveFile = require('../lib/move-file.js')
 
 const fixture = '🦄'
 
+// Node.js 22.20.0+ removed trailing backslash from Windows junctions
+// https://github.com/nodejs/node/pull/59847
+const nodeVersion = process.versions.node.split('.').map(Number)
+const hasTrailingSlashFix = nodeVersion[0] > 22 ||
+  (nodeVersion[0] === 22 && nodeVersion[1] >= 20)
+
 t.test('missing `source` or `destination` throws', t => t.rejects(moveFile()))
 
 t.test('move a file', async t => {
@@ -147,9 +153,12 @@ t.test('move a directory across devices', async t => {
     'created file symlink')
   t.ok(fsSync.lstatSync(`${dest}/link`).isSymbolicLink(), 'created a directory symbolic link')
   // below assertion varies for windows because junctions are absolute paths
+  const expectedLink = (process.platform === 'win32' && !hasTrailingSlashFix)
+    ? join(dest, 'sub\\')
+    : (process.platform === 'win32' ? join(dest, 'sub') : './sub')
   t.equal(
     fsSync.readlinkSync(`${dest}/link`),
-    process.platform === 'win32' ? join(dest, 'sub\\') : './sub',
+    expectedLink,
     'created the directory symbolic link with the correct target'
   )
   t.ok(fsSync.lstatSync(`${dest}/sub/reallysub`).isDirectory(),
@@ -162,9 +171,12 @@ t.test('move a directory across devices', async t => {
     'created the symlink with the appropriate target'
   )
   t.ok(fsSync.lstatSync(`${dest}/abs`).isSymbolicLink(), 'created the absolute path symlink')
+  const expectedAbs = (process.platform === 'win32' && !hasTrailingSlashFix)
+    ? `${process.cwd()}\\`
+    : process.cwd()
   t.equal(
     fsSync.readlinkSync(`${dest}/abs`),
-    process.platform === 'win32' ? `${process.cwd()}\\` : process.cwd(),
+    expectedAbs,
     'kept the correct absolute path'
   )
 })
@@ -212,9 +224,12 @@ t.test('move a directory across devices (EPERM)', async t => {
     'created file symlink')
   t.ok(fsSync.lstatSync(`${dest}/link`).isSymbolicLink(), 'created a directory symbolic link')
   // below assertion varies for windows because junctions are absolute paths
+  const expectedLinkEperm = (process.platform === 'win32' && !hasTrailingSlashFix)
+    ? join(dest, 'sub\\')
+    : (process.platform === 'win32' ? join(dest, 'sub') : './sub')
   t.equal(
     fsSync.readlinkSync(`${dest}/link`),
-    process.platform === 'win32' ? join(dest, 'sub\\') : './sub',
+    expectedLinkEperm,
     'created the directory symbolic link with the correct target'
   )
   t.ok(
@@ -229,9 +244,12 @@ t.test('move a directory across devices (EPERM)', async t => {
     'created the symlink with the appropriate target'
   )
   t.ok(fsSync.lstatSync(`${dest}/abs`).isSymbolicLink(), 'created the absolute path symlink')
+  const expectedAbsEperm = (process.platform === 'win32' && !hasTrailingSlashFix)
+    ? `${process.cwd()}\\`
+    : process.cwd()
   t.equal(
     fsSync.readlinkSync(`${dest}/abs`),
-    process.platform === 'win32' ? `${process.cwd()}\\` : process.cwd(),
+    expectedAbsEperm,
     'kept the correct absolute path'
   )
 })
