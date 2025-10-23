@@ -1,5 +1,16 @@
 # Changelog
 
+## [5.0.0](https://github.com/npm/fs/compare/v4.0.0...v5.0.0) (2025-10-23)
+### ⚠️ BREAKING CHANGES
+* `@npmcli/fs` now supports node `^20.17.0 || >=22.9.0`
+### Bug Fixes
+* [`f3b5996`](https://github.com/npm/fs/commit/f3b5996ae144c740c2238f5bb4960d9df896e242) [#133](https://github.com/npm/fs/pull/133) align to npm 11 node engine range (@owlstronaut)
+### Chores
+* [`397d379`](https://github.com/npm/fs/commit/397d379a24aee08cb5e248c5294aec77f40411b4) [#135](https://github.com/npm/fs/pull/135) align tests with nodejs behavior change (@owlstronaut)
+* [`1be67ee`](https://github.com/npm/fs/commit/1be67ee39cd1363f7a47619b22574603817bf6ed) [#133](https://github.com/npm/fs/pull/133) template-oss-apply (@owlstronaut)
+* [`4f74601`](https://github.com/npm/fs/commit/4f74601489a9c258642630bef4fbb083c21ff36e) [#126](https://github.com/npm/fs/pull/126) postinstall workflow updates (#126) (@owlstronaut)
+* [`3cbc2b2`](https://github.com/npm/fs/commit/3cbc2b29923127c9ad9d3833fee1eafb41fc005a) [#132](https://github.com/npm/fs/pull/132) bump @npmcli/template-oss from 4.26.0 to 4.27.1 (#132) (@dependabot[bot], @npm-cli-bot)
+
 ## [4.0.0](https://github.com/npm/fs/compare/v3.1.1...v4.0.0) (2024-09-11)
 ### ⚠️ BREAKING CHANGES
 * `@npmcli/fs` now supports node `^18.17.0 || >=20.5.0`
