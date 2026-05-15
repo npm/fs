@@ -1,5 +1,20 @@
 # Changelog
 
+## [6.0.0](https://github.com/npm/fs/compare/v5.0.0...v6.0.0) (2026-05-15)
+### ⚠️ BREAKING CHANGES
+* `@npmcli/fs` now supports node `^22.22.2 || ^24.15.0 || >=26.0.0`
+* template-oss-apply
+### Features
+* [`4b500fc`](https://github.com/npm/fs/commit/4b500fc39453a0a0b56c334490c2de422fed533c) [#146](https://github.com/npm/fs/pull/146) bump to new node engine range (@owlstronaut)
+* [`c281db6`](https://github.com/npm/fs/commit/c281db6d72ceadce6d12f61f43dc4f2a8290f0de) [#146](https://github.com/npm/fs/pull/146) template-oss-apply (@owlstronaut)
+### Bug Fixes
+* [`0c40630`](https://github.com/npm/fs/commit/0c4063025b6f3bc8819d1b8c9d96be6cf64fa359) [#146](https://github.com/npm/fs/pull/146) avoid passing Stats object as type to fs.symlink in moveFile (@owlstronaut)
+### Chores
+* [`11aa917`](https://github.com/npm/fs/commit/11aa9176013b9d499f970419f09cb03d84ef34e5) [#146](https://github.com/npm/fs/pull/146) template-oss-apply (@owlstronaut)
+* [`ef55897`](https://github.com/npm/fs/commit/ef558972e0cdf83d68f7be58d4eb137d217bb6f7) [#146](https://github.com/npm/fs/pull/146) bumping @npmcli/template-oss from 4.30.0 to 5.1.0 (@owlstronaut)
+* [`1b784d7`](https://github.com/npm/fs/commit/1b784d7ef08f677cd6652c811d62dd4d58a6db92) [#136](https://github.com/npm/fs/pull/136) bump @npmcli/eslint-config from 5.1.0 to 6.0.0 (#136) (@dependabot[bot])
+* [`6fedb21`](https://github.com/npm/fs/commit/6fedb21b03c35527e5659e70d5f07fa5810b982c) [#141](https://github.com/npm/fs/pull/141) bump @npmcli/template-oss from 4.29.0 to 4.30.0 (#141) (@dependabot[bot], @npm-cli-bot)
+
 ## [5.0.0](https://github.com/npm/fs/compare/v4.0.0...v5.0.0) (2025-10-23)
 ### ⚠️ BREAKING CHANGES
 * `@npmcli/fs` now supports node `^20.17.0 || >=22.9.0`
