@@ -23,6 +23,33 @@ t.test('move a file', async t => {
   t.equal(fsSync.readFileSync(dest, 'utf8'), fixture)
 })
 
+t.test('preserve data after a successful no-op rename', async t => {
+  const cases = [
+    ['same file', fixture, 'src'],
+    ['equivalent file path', fixture, './src'],
+    ['same directory', { nested: { file: fixture } }, 'src'],
+  ]
+
+  for (const [name, contents, target] of cases) {
+    await t.test(name, async t => {
+      const dir = t.testdir({ src: contents })
+      const source = join(dir, 'src')
+      const destination = target === 'src' ? source : `${dir}/${target}`
+
+      try {
+        await fs.rename(source, destination)
+      } catch (error) {
+        t.skip(`native rename does not support this no-op: ${error.code}`)
+        return
+      }
+
+      await moveFile(source, destination)
+      const file = typeof contents === 'string' ? source : join(source, 'nested', 'file')
+      t.equal(await fs.readFile(file, 'utf8'), fixture, 'preserves the original contents')
+    })
+  }
+})
+
 t.test('move a directory', async t => {
   const dir = t.testdir({
     src: {
